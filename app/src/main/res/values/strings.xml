@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ReNotify</string>
+    <string name="text">Listening for notifications!</string>
 </resources>
