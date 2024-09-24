@@ -1,50 +1,80 @@
 package com.example.renotify
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
+import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.OutputStreamWriter
-import java.net.InetAddress
+import kotlinx.coroutines.withContext
 import java.net.Socket
 
 class NetworkService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        intent?.let {
-            val notificationData = it.getStringExtra("notification_data")
+    private val notificationId = 1
+    private val channelId = "NetworkServiceChannel"
 
-            serviceScope.launch {
-                sendNotificationData(notificationData)
+    override fun onCreate() {
+        super.onCreate()
+
+        startForegroundService()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val notificationData = intent?.getStringExtra("notification_data")
+
+        serviceScope.launch {
+            notificationData?.let {
+                sendNotificationData(it)
             }
         }
 
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
-    private fun sendNotificationData(notificationData: String?) {
-        notificationData?.let {
-            val receiverIP = "192.168.0.103"
-            val port = 8080
-
-            try {
-                val inetAddress = InetAddress.getByName(receiverIP)
-                val socket = Socket(inetAddress, port)
-
-                val writer = OutputStreamWriter(socket.getOutputStream())
-                writer.write(notificationData)
-                writer.flush()
-
+    private suspend fun sendNotificationData(data: String) {
+        try {
+            withContext(Dispatchers.IO) {
+                val socket = Socket("192.168.0.103", 8080)
+                socket.getOutputStream().write(data.toByteArray())
                 socket.close()
-                Log.d("NetworkService", "Notification sent successfully")
-            } catch (e: Exception) {
-                Log.e("NetworkService", "Error sending data", e)
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun startForegroundService() {
+        createNotificationChannel()
+
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("Notification Service Running")
+            .setContentText("Listening for incoming notifications...")
+            .setContentIntent(pendingIntent)
+            .build()
+
+        startForeground(notificationId, notification)
+    }
+
+    private fun createNotificationChannel() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val serviceChannel = NotificationChannel(
+                channelId,
+                "Notification Listener Service",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(serviceChannel)
         }
     }
 

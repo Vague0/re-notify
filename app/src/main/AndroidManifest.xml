@@ -35,7 +35,8 @@
         </service>
         <service
             android:name=".NetworkService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
     </application>
 
 </manifest>
