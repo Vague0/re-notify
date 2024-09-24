@@ -2,6 +2,7 @@ package com.example.renotify
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
@@ -19,13 +20,13 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        val packageNames = NotificationManagerCompat.getEnabledListenerPackages(this)
-        if (!packageNames.contains(packageName)) {
-            val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
-            startActivity(intent)
-        } else {
-            val restartIntent = Intent(this, NotificationListener::class.java)
-            startService(restartIntent)
+        val requestPermissionButton: Button = findViewById(R.id.request_permission_button)
+        requestPermissionButton.setOnClickListener {
+            val packageNames = NotificationManagerCompat.getEnabledListenerPackages(this)
+            if (!packageNames.contains(packageName)) {
+                val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
+                startActivity(intent)
+            }
         }
     }
 }
