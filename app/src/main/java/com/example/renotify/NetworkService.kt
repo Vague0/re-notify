@@ -85,7 +85,16 @@ class NetworkService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.launch {
-            // Todo
+            try {
+                val message = "Exit"
+                val socket = Socket("192.168.0.103", 8080)
+                val outputStream = socket.getOutputStream()
+                outputStream.write(message.toByteArray())
+                outputStream.flush()
+                socket.close()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

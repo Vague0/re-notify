@@ -6,19 +6,26 @@ import android.service.notification.StatusBarNotification
 import android.content.Intent
 
 class NotificationListener : NotificationListenerService() {
+
+    companion object {
+        var isSendingEnabled = false
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         sbn?.let {
-            val notification = it.notification
-            val extras = notification.extras
-            val title = extras.getString(Notification.EXTRA_TITLE)
-            val text = extras.getString(Notification.EXTRA_TEXT)
+            if (isSendingEnabled) {
+                val notification = it.notification
+                val extras = notification.extras
+                val title = extras.getString(Notification.EXTRA_TITLE)
+                val text = extras.getString(Notification.EXTRA_TEXT)
 
-            val notificationData = "$title: $text"
+                val notificationData = "$title: $text"
 
-            val intent = Intent(this, NetworkService::class.java).apply {
-                putExtra("notification_data", notificationData)
+                val intent = Intent(this, NetworkService::class.java).apply {
+                    putExtra("notification_data", notificationData)
+                }
+                startService(intent)
             }
-            startService(intent)
         }
     }
 }

@@ -10,6 +10,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
+
+    private var isServiceRunning = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -21,12 +24,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         val requestPermissionButton: Button = findViewById(R.id.request_permission_button)
+
         requestPermissionButton.setOnClickListener {
             val packageNames = NotificationManagerCompat.getEnabledListenerPackages(this)
             if (!packageNames.contains(packageName)) {
                 val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
                 startActivity(intent)
             }
+
+            isServiceRunning = !isServiceRunning
+            NotificationListener.isSendingEnabled = isServiceRunning
+
+            if (!isServiceRunning) {
+                stopService(Intent(this, NetworkService::class.java))
+            }
+
         }
     }
 }
